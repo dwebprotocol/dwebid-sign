@@ -10,9 +10,10 @@ const {
   randombytes_buf: randomBytes
 } = require('sodium-native')
 
-const VALUE_MAX_SIZE = 1000
-const dkSeg = Buffer.from('4:didk')
-const seqSeg = Buffer.from('3:seqi')
+const BOX_MAX_SIZE = 1000
+
+const dkSeg = Buffer.from('4:disc')
+const seqSeq = Buffer.from('3:seqi')
 const vSeg = Buffer.from('1:v')
 
 class DWebIdSign {
@@ -22,48 +23,44 @@ class DWebIdSign {
     createKeypair(publicKey, secretKey)
     return { publicKey, secretKey }
   }
-
   cryptoSign (msg, keypair) {
-    assert(Buffer.isBuffer(msg), 'msg must be a Buffer.')
+    assert(Buffer.isBuffer(msg), 'msg must be a buffer')
     assert(keypair, 'keypair is required')
     const { secretKey } = keypair
-    assert(Buffer.isBuffer(secretKey), 'keypair.secretKey is required.')
+    assert(Buffer.isBuffer(secretKey), 'keypair.secretKey is required')
+    sign(signature, msg, secretKey)
+    return signature
+  }
+  sign (box, opts) {
+    assert(typeof opts === 'object', 'Options are required.')
+    assert(Buffer.isBuffer(value), 'Value must be a buffer')
+    assert(box.length <= BOX_MAX_SIZE, `Box size must be <= ${BOX_MAX_SIZE}`)
+    const { keypair } = opts
+    assert(keypair, 'keypair is required.')
+    const { secretKey } = keypair
+    assert(Buffer.isBuffer(secretKey), 'keypair.secretKey is required')
+    const msg = this.signable(box, opts)
     const signature = Buffer.alloc(signSize)
     sign(signature, msg, secretKey)
     return signature
   }
-  sign (username, opts) {
-    assert(typeof opts === 'object', 'Options are required')
-    assert(Buffer.isBuffer(username), 'Username must be a buffer')
-    assert(username.length <= VALUE_MAX_SIZE, `Username size must be <= ${VALUE_MAX_SIZE}`) 
-    assert(opts.dk, 'Options must include the identity document key')
-    const { keypair } = opts
-    assert(keypair, 'keypair is required')
-    const { secretKey } = keypair
-    assert(Buffer.isBuffer(secretKey), 'keypair.secretKey is required.')
-    const msg = this.signable(username, opts)
-    const signature = Buffer.alloc(signSize)
-    sign(signature, msg, secretKey)
-    return signature  
-  }
-  signable (username, opts = {}) {
+  signable (box, opts = {}) {
     const { dk, seq = 0 } = opts
-    assert(Buffer.isBuffer(value), 'Username must be a buffer.')
-    assert(username.length <= VALUE_MAX_SIZE, `Username size must be <= ${VALUE_MAX_SIZE}`)
-    assert(dk, 'opts must include the identity document key')
+    assert(Buffer.isBuffer(box), 'Box must be a buffer.')
+    assert(box.length <= BOX_MAX_SIZE, 'Box size must be <= `${BOX_MAX_SIZE}`')
     return Buffer.concat([
       dkSeg,
       Buffer.from(`${dk.length}:`),
       dk,
-      seqSeq,
+      seqSeg,
       Buffer.from(`${seq.toString()}e`),
       vSeg,
-      Buffer.from(`${username.length}:`),
-      username
+      Buffer.from(`${box.length}:`),
+      box
     ])
   }
 }
 
 module.exports = () => new DWebIdSign()
 module.exports.DWebIdSign = DWebIdSign
-module.exports.VALUE_MAX_SIZE = VALUE_MAX_SIZE
+module.exports.BOX_MAX_SIZE = BOX_MAX_SIZE

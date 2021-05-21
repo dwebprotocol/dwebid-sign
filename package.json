@@ -1,6 +1,6 @@
 {
   "name": "@dwebid/sign",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Crypto library for generating dWebID-based digital signatures",
   "main": "index.js",
   "scripts": {
